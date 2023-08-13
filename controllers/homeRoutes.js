@@ -1,6 +1,7 @@
 const router = require('express').Router();
-const { Blog, User } = require('../models');
+const { Blog, User, Comment } = require('../models');
 const withAuth = require('../utils/auth');
+const sequelize = require('../config/connection');
 
 router.get('/', async (req, res) => {
   try {
@@ -11,6 +12,14 @@ router.get('/', async (req, res) => {
           model: User,
           attributes: ['name'],
         },
+        {
+          model: Comment,
+          attributes: ['id', 'content', 'date_created',  'blog_id', 'user_id'],
+          include: {
+            model: User,
+            attributes: ['name'],
+          }
+        }
       ],
     });
 
@@ -27,27 +36,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('blog/:id', async (req, res) => {
-  try {
-    const commentData = await Comment.findByPk(req.params.blog_id, {
-      include: [
-        {
-          model: User,
-          attributes: ['name'],
-        },
-      ],
-    });
-
-    const comment = commentData.get({ plain: true });
-
-    res.render('blog', {
-      ...comment,
-      logged_in: req.session.logged_in
-    });
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
 
 router.get('/blog/:id', async (req, res) => {
   try {
@@ -57,13 +45,21 @@ router.get('/blog/:id', async (req, res) => {
           model: User,
           attributes: ['name'],
         },
+        {
+          model: Comment,
+          attributes: ['id', 'content', 'date_created',  'blog_id', 'user_id'],
+          include: {
+            model: User,
+            attributes: ['name'],
+          }
+        }
       ],
     });
 
     const blog = blogData.get({ plain: true });
 
     res.render('blog', {
-      ...blog,
+      blog,
       logged_in: req.session.logged_in
     });
   } catch (err) {
